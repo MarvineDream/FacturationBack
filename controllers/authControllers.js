@@ -1,5 +1,5 @@
 import User from '../models/User.js';
-import { comparePassword, hashPassword, signJwt } from '../Utils/Auth.js';
+import { comparePassword, hashPassword, signJwt } from '../utils/Auth.js';
 
 // Créer un compte Utilisateur
 export const register = async (req, res) => {
