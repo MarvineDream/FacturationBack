@@ -1,10 +1,10 @@
 import User from '../models/User.js';
-import { comparePassword, hashPassword, signJwt } from '../utils/Auth.js';
+import { comparePassword, hashPassword, signJwt } from '../utils/auth.js';
 
 // Créer un compte Utilisateur
 export const register = async (req, res) => {
   console.log("Requête reçue pour REGISTER :", req.body);
-
+// comparePassword, hashPassword, signJwt
   try {
     const { name, email, password, role } = req.body;
     console.log("Hashing du mot de passe pour:", email);
