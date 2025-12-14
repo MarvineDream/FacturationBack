@@ -37,7 +37,7 @@ app.use((req, res, next) => {
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:3000", 
+  origin: ["http://localhost:3000", "https://facturationback.onrender.com"],
   credentials: true,
 }))
 app.use(express.json());
