@@ -20,7 +20,7 @@ router.get('/users', getUsers);
 
 
 // Récupérer l'utilisateur actuel
-router.get('/me', getCurrentUser);
+router.get('/me', requireAuth, getCurrentUser);
 
 
 // Récupérer un utilisateur par ID

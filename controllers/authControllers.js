@@ -70,7 +70,7 @@ export const login = async (req, res) => {
   }
 };
 
-// Récuperation de tous les clients
+// Récuperation de tous les utilisateurs
 export const getUsers = async (req, res) => {
   console.log("[USERS] Requête reçue pour récupérer tous les utilisateurs...");
   try {
@@ -151,29 +151,20 @@ export const deleteUser = async (req, res) => {
 };
 
 // Récuperer l'utilisateur connecté
-export const getCurrentUser = async (req, res) => {
-  console.log("[AUTH] Requête reçue pour obtenir l'utilisateur connecté...");
-  try {
-    if (!req.user?.id) {
-      console.warn("[AUTH] Aucun ID utilisateur dans req.user (token invalide ?)");
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
-    }
-
-    console.log(`[AUTH] Vérification du profil pour l'utilisateur ID : ${req.user.id}`);
-    const user = await User.findById(req.user.id).select("-password");
-
-    if (!user) {
-      console.warn(`[AUTH] Utilisateur introuvable avec ID : ${req.user.id}`);
-      return res.status(404).json({ message: "Utilisateur introuvable" });
-    }
-
-    console.log(`[AUTH] Utilisateur connecté : ${user.nom || "Nom non défini"} (${user.email})`);
-    res.json(user);
-  } catch (error) {
-    console.error("[AUTH] Erreur GET CURRENT USER :", error);
-    res.status(500).json({ message: "Erreur serveur", error: error.message });
+export const getCurrentUser = (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: "Utilisateur non authentifié",
+    });
   }
+
+  return res.json({
+    success: true,
+    data: req.user,
+  });
 };
+
 
 // Status d'un utilisateur
 export const toggleUserStatus = async (req, res) => {

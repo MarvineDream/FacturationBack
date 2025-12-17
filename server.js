@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes.js';
 import FactureRoutes from './routes/FactureRoutes.js';
 import ProduitRoutes from './routes/ProduitRoutes.js';
 import ClientRoutes from './routes/ClientRoutes.js';
+import settingsRoutes from './routes/settingsRoutes.js';
 import { connectToDatabase } from './Config/db.js';
 
 
@@ -49,6 +50,7 @@ app.use('/auth', authRoutes);
 app.use('/factures', FactureRoutes);
 app.use('/produit', ProduitRoutes);
 app.use('/clients', ClientRoutes);
+app.use('/settings', settingsRoutes);
 
 
 

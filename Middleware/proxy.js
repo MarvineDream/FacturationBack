@@ -9,42 +9,58 @@ export const requireAuth = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.log("[AUTH] Aucun token fourni");
-    return res.status(401).json({ success: false, message: "Token manquant ou invalide" });
+    return res.status(401).json({
+      success: false,
+      message: "Token manquant ou invalide",
+    });
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Vérifier si l'utilisateur existe
-    const user = await User.findById(decoded.id).select("_id name email role actif");
+
+    const user = await User.findById(decoded.id).select(
+      "_id name email role actif"
+    );
+
     if (!user) {
-      console.log("[AUTH] Utilisateur introuvable pour l'ID:", decoded.id);
-      return res.status(401).json({ success: false, message: "Utilisateur introuvable" });
+      return res.status(401).json({
+        success: false,
+        message: "Utilisateur introuvable",
+      });
     }
 
     if (!user.actif) {
-      console.log("[AUTH] Utilisateur désactivé");
-      return res.status(403).json({ success: false, message: "Compte désactivé" });
+      return res.status(403).json({
+        success: false,
+        message: "Compte désactivé",
+      });
     }
 
-    // Injecter exactement ce que le frontend attend
+    // 🔥 SOURCE UNIQUE DE VÉRITÉ
     req.user = {
-      id: user._id,
-      name: user.name,
+      id: user._id.toString(),
+      name: user.name,           // ✅ TOUJOURS DÉFINI
       email: user.email,
       role: user.role,
+      isActive: user.actif,
+      createdAt: user.createdAt,
     };
 
-    console.log("[AUTH] Utilisateur authentifié:", req.user);
+    console.log("[AUTH] req.user =", req.user);
+
     next();
   } catch (err) {
-    console.error("[AUTH] Erreur de vérification du token:", err.message);
-    return res.status(401).json({ success: false, message: "Token invalide ou expiré" });
+    console.error("[AUTH] Token invalide:", err.message);
+    return res.status(401).json({
+      success: false,
+      message: "Token invalide ou expiré",
+    });
   }
 };
+
+
 
 export const isAdmin = (req, res, next) => {
   if (!req.user) {
@@ -60,3 +76,14 @@ export const isAdmin = (req, res, next) => {
   console.log(`[AUTH] Accès administrateur autorisé : ${req.user.email}`);
   next();
 };
+
+
+export const adminOnly = (req, res, next) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({
+      success: false,
+      error: "Accès réservé aux administrateurs",
+    })
+  }
+  next()
+}
