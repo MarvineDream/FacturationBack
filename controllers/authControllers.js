@@ -57,7 +57,7 @@ export const login = async (req, res) => {
       token,
       user: {
         id: user._id,
-        nom: user.nom,
+        nom: user.name,
         email: user.email,
         role: user.role,
       },
@@ -73,15 +73,44 @@ export const login = async (req, res) => {
 // Récuperation de tous les utilisateurs
 export const getUsers = async (req, res) => {
   console.log("[USERS] Requête reçue pour récupérer tous les utilisateurs...");
+
   try {
-    const users = await User.find().select("-password");
+    // Sécurité : admin seulement (si pas déjà protégé par la route)
+    if (req.user?.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Accès réservé aux administrateurs",
+      });
+    }
+
+    const users = await User.find().select(
+      "name email role actif createdAt lastSeenAt"
+    );
+
     console.log(`[USERS] ${users.length} utilisateur(s) trouvé(s).`);
-    res.json(users);
+
+    res.json({
+      success: true,
+      data: users.map((user) => ({
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.actif,
+        createdAt: user.createdAt,
+        lastSeenAt: user.lastSeenAt,
+      })),
+    });
   } catch (error) {
     console.error("[USERS] Erreur GET USERS :", error);
-    res.status(500).json({ message: "Erreur serveur", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur",
+      error: error.message,
+    });
   }
 };
+
 
 // Récuperer un utilisateur par son ID
 export const getUserById = async (req, res) => {

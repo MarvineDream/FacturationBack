@@ -6,50 +6,59 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const requireAuth = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  let token = null;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({
-      success: false,
-      message: "Token manquant ou invalide",
-    });
+  // 1️⃣ Priorité Authorization Header
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
   }
 
-  const token = authHeader.split(" ")[1];
+  // 2️⃣ Sinon Token via Cookie
+  if (!token && req.cookies?.token) {
+    token = req.cookies.token;
+  }
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Token manquant",
+    });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id).select(
-      "_id name email role actif"
+      "_id name email role actif createdAt lastSeenAt"
     );
 
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Utilisateur introuvable",
-      });
+      return res.status(401).json({ success: false, message: "Utilisateur introuvable" });
     }
 
     if (!user.actif) {
-      return res.status(403).json({
-        success: false,
-        message: "Compte désactivé",
-      });
+      return res.status(403).json({ success: false, message: "Compte désactivé" });
     }
 
-    // 🔥 SOURCE UNIQUE DE VÉRITÉ
+    // lastSeenAt
+    const now = Date.now();
+    if (!user.lastSeenAt || now - user.lastSeenAt.getTime() > 60_000) {
+      user.lastSeenAt = new Date();
+      await user.save({ timestamps: false });
+    }
+
     req.user = {
       id: user._id.toString(),
-      name: user.name,           // ✅ TOUJOURS DÉFINI
+      name: user.name,
       email: user.email,
       role: user.role,
       isActive: user.actif,
       createdAt: user.createdAt,
+      lastSeenAt: user.lastSeenAt,
     };
 
     console.log("[AUTH] req.user =", req.user);
-
     next();
   } catch (err) {
     console.error("[AUTH] Token invalide:", err.message);
@@ -59,6 +68,7 @@ export const requireAuth = async (req, res, next) => {
     });
   }
 };
+
 
 
 

@@ -7,10 +7,10 @@ import { adminOnly, requireAuth } from '../Middleware/proxy.js';
 const router = express.Router();
 
 // Récupérer les paramètres
-router.get('/settings', requireAuth, adminOnly, getSettings);
+router.get('/', requireAuth, adminOnly, getSettings);
 
 // Mettre à jour les paramètres
-router.put('/settings', requireAuth, adminOnly, updateSettings);
+router.put('/', requireAuth, adminOnly, updateSettings);
 
 
 

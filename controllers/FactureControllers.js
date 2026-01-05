@@ -7,6 +7,8 @@ import User from "../models/User.js"
 import PDFDocument from "pdfkit"
 import path from "path"
 
+
+
 // --------------------
 // Helper pour formater le JSON
 // --------------------
@@ -412,5 +414,210 @@ export const downloadInvoicePdf = async (req, res) => {
   } catch (error) {
     console.error("[PDF ERROR] :", error)
     res.status(500).send("Erreur lors de la génération du PDF")
+  }
+}
+
+// ===============================
+// ADMIN ANALYSES
+// ===============================
+export const getAdminAnalytics = async (req, res) => {
+  console.log("\n================= [ADMIN ANALYTICS] =================")
+  console.log("User :", req.user?.id || "—")
+  console.log("Query reçue :", req.query)
+
+  try {
+    /* ================= PERIOD ================= */
+    const { period = "month" } = req.query
+
+    const now = new Date()
+    let startDate = null
+
+    switch (period) {
+      case "day":
+        startDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        )
+        break
+
+      case "week":
+        startDate = new Date(now)
+        startDate.setDate(startDate.getDate() - 7)
+        break
+
+      case "month":
+        startDate = new Date(now)
+        startDate.setMonth(startDate.getMonth() - 1)
+        break
+
+      case "quarter":
+        startDate = new Date(now)
+        startDate.setMonth(startDate.getMonth() - 3)
+        break
+
+      case "year":
+        startDate = new Date(now)
+        startDate.setFullYear(startDate.getFullYear() - 1)
+        break
+    }
+
+    const dateFilter = startDate
+      ? { createdAt: { $gte: startDate } }
+      : {}
+
+    console.log("Start date :", startDate)
+    console.log("Date filter :", dateFilter)
+
+    /* ================= SUMMARY ================= */
+    const summary = await Invoice.aggregate([
+      { $match: dateFilter },
+      {
+        $group: {
+          _id: null,
+          revenue: { $sum: "$total" },
+          totalSales: { $sum: 1 },
+        },
+      },
+    ])
+
+    const revenue = summary[0]?.revenue || 0
+    const totalSales = summary[0]?.totalSales || 0
+
+    /* ================= BEST CUSTOMER ================= */
+    const bestCustomerAgg = await Invoice.aggregate([
+      { $match: dateFilter },
+      {
+        $lookup: {
+          from: "clients",
+          localField: "clientId",
+          foreignField: "_id",
+          as: "client",
+        },
+      },
+      { $unwind: "$client" },
+      {
+        $group: {
+          _id: "$clientId",
+          customerName: { $first: "$client.name" },
+          total: { $sum: "$total" },
+        },
+      },
+      { $sort: { total: -1 } },
+      { $limit: 1 },
+    ])
+
+    const bestCustomer = bestCustomerAgg[0]
+      ? {
+          name: bestCustomerAgg[0].customerName,
+          totalSpent: bestCustomerAgg[0].total,
+          percentage: revenue
+            ? Math.round(
+                (bestCustomerAgg[0].total / revenue) * 100
+              )
+            : 0,
+        }
+      : null
+
+    /* ================= TOP PRODUCTS ================= */
+    const topProductsAgg = await Invoice.aggregate([
+      { $match: dateFilter },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.productName",
+          sales: { $sum: "$items.quantity" },
+        },
+      },
+      { $sort: { sales: -1 } },
+      { $limit: 5 },
+    ])
+
+    /* ================= REVENUE TREND ================= */
+    const revenueTrendAgg = await Invoice.aggregate([
+      { $match: dateFilter },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%d/%m",
+              date: "$createdAt",
+            },
+          },
+          value: { $sum: "$total" },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ])
+
+    /* ================= CLIENTS ================= */
+
+    // 🔹 Total clients
+    const totalClients = await Client.countDocuments()
+
+    // 🔹 Nouveaux clients sur la période
+    const newClients = startDate
+      ? await Client.countDocuments({
+          createdAt: { $gte: startDate },
+        })
+      : totalClients
+
+    // 🔹 Trend nouveaux clients
+    const newClientsTrendAgg = await Client.aggregate([
+      ...(startDate
+        ? [{ $match: { createdAt: { $gte: startDate } } }]
+        : []),
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%d/%m",
+              date: "$createdAt",
+            },
+          },
+          value: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ])
+
+    /* ================= RESPONSE ================= */
+    return res.json({
+      success: true,
+      data: {
+        revenue,
+        totalSales,
+
+        totalClients,
+        newClients,
+
+        bestCustomer,
+
+        topProduct: topProductsAgg[0]?._id || "—",
+
+        revenueTrend: revenueTrendAgg.map((r) => ({
+          label: r._id,
+          value: r.value,
+        })),
+
+        newClientsTrend: newClientsTrendAgg.map((c) => ({
+          label: c._id,
+          value: c.value,
+        })),
+
+        topProducts: topProductsAgg.map((p) => ({
+          name: p._id,
+          sales: p.sales,
+        })),
+      },
+    })
+  } catch (error) {
+    console.error("\n[ADMIN ANALYTICS ERROR]")
+    console.error(error)
+
+    return res.status(500).json({
+      success: false,
+      message: "Erreur lors du chargement des analytics",
+    })
   }
 }

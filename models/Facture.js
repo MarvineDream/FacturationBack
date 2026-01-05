@@ -17,7 +17,7 @@ const InvoiceSchema = new mongoose.Schema(
     clientId: { type: mongoose.Schema.Types.ObjectId, ref: "Client", required: true },
     items: [InvoiceItemSchema],
 
-    invoiceNumber: { type: String, required: true, unique: true }, // Correspond au frontend
+    invoiceNumber: { type: String, required: true, unique: true },
 
     subtotal: { type: Number, required: true },
     taxRate: { type: Number, default: 0 },
@@ -32,7 +32,7 @@ const InvoiceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🔥 Transformation pour le frontend
+// Transformation pour le frontend
 InvoiceSchema.set("toJSON", {
   virtuals: true,
   versionKey: false,

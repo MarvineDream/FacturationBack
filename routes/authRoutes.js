@@ -1,7 +1,7 @@
 // routes/authRoutes.js
 import express from 'express';
 import { deleteUser, getCurrentUser, getUserById, getUsers, login, register, toggleUserStatus, updateUser } from '../controllers/authControllers.js';
-import { isAdmin, requireAuth } from '../Middleware/proxy.js';
+import { adminOnly, isAdmin, requireAuth } from '../Middleware/proxy.js';
 
 
 const router = express.Router();
@@ -16,7 +16,7 @@ router.post('/login', login);
 
 
 // Récupérer tous les utilisateurs
-router.get('/users', getUsers);
+router.get('/users', requireAuth, adminOnly, getUsers);
 
 
 // Récupérer l'utilisateur actuel
@@ -24,7 +24,7 @@ router.get('/me', requireAuth, getCurrentUser);
 
 
 // Récupérer un utilisateur par ID
-router.get('/:id', getUserById);
+router.get('/:id', requireAuth, getUserById);
 
 
 // Supprimer un utilisateur
