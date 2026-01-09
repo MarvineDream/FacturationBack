@@ -33,7 +33,8 @@ app.use(
 // CORS
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://facturationback.onrender.com"],
+    origin: ["http://localhost:3000", 
+             "https://facturationback.onrender.com"],
     credentials: true,
   })
 );
@@ -76,5 +77,5 @@ app.use("/settings", settingsRoutes);
 
 // Lancement du serveur
 app.listen(PORT, () => {
-  console.log(`Serveur connecté sur http://localhost:${PORT}`);
+  console.log(`Serveur écoute sur le port ${PORT}`);
 });
