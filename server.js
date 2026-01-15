@@ -40,7 +40,7 @@ app.use(
 );
 
 // Headers manuels (optionnel mais ok)
-/* app.use((req, res, next) => {
+ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Max-Age", "1800");
@@ -58,7 +58,7 @@ app.use(
   }
 
   next();
-}); */
+}); 
 
 // Body parsers
 app.use(express.json());
