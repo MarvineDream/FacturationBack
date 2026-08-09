@@ -34,14 +34,14 @@ app.use(
 app.use(
   cors({
     origin: ["http://localhost:3000", 
-             "https://facturationback.onrender.com"],
+            "https://facturationback.onrender.com"],
     credentials: true,
   })
 );
 
 // Headers manuels (optionnel mais ok)
- app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://facturationback.onrender.com");
+ /*app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Max-Age", "1800");
   res.setHeader(
@@ -58,7 +58,7 @@ app.use(
   }
 
   next();
-}); 
+});  */
 
 // Body parsers
 app.use(express.json());
