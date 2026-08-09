@@ -35,10 +35,10 @@ userSchema.pre("findOneAndDelete", async function (next) {
     await Invoice.deleteMany({ createdBy: userId })
     await Client.deleteMany({ createdBy: userId })
 
-    console.log(`[Cascade Delete] ✅ Factures et clients supprimés.`)
+    console.log(`[Cascade Delete] Factures et clients supprimés.`)
     next()
   } catch (err) {
-    console.error("[Cascade Delete] ❌ Erreur :", err)
+    console.error("[Cascade Delete] Erreur :", err)
     next(err)
   }
 })

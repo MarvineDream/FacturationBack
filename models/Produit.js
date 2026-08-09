@@ -4,15 +4,15 @@ const ProductSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
 
-    // 📌 Champs FRONTEND
+    // Champs FRONTEND
     name: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
 
-    // 📌 Champs internes (calcul automatique)
-    price: { type: Number, required: true, default: 0 }, // Utilisé par le frontend (TTC ou HT selon ta logique)
-    tva: { type: Number, required: true, default: 18 }, // Exemple : TVA 18%
+    // Champs internes (calcul automatique)
+    price: { type: Number, required: true, default: 0 }, 
+    tva: { type: Number, required: true, default: 18 }, 
     
-    // 📌 Champs calculés automatiquement
+    // Champs calculés automatiquement
     priceHT: { type: Number, default: 0 }, // Hors Taxes
     priceTTC: { type: Number, default: 0 }, // Toutes Taxes Comprises
     montantTVA: { type: Number, default: 0 },
@@ -22,7 +22,7 @@ const ProductSchema = new mongoose.Schema(
   }
 );
 
-// 🧠 Middleware pour ajuster automatiquement les valeurs
+// Middleware pour ajuster automatiquement les valeurs
 ProductSchema.pre('save', function (next) {
   // Si le frontend envoie un prix TTC, on re-calcule le HT et montant TVA
   this.montantTVA = (this.price * this.tva) / (100 + this.tva);
@@ -32,7 +32,7 @@ ProductSchema.pre('save', function (next) {
   next();
 });
 
-// 🧾 Format JSON retourné au frontend
+// Format JSON retourné au frontend
 ProductSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
@@ -40,7 +40,7 @@ ProductSchema.set('toJSON', {
     ret.id = ret._id.toString();
     delete ret._id;
 
-    // ✅ Le frontend ne voit que ces champs
+    // Le frontend ne voit que ces champs
     delete ret.priceHT;
     delete ret.priceTTC;
     delete ret.montantTVA;

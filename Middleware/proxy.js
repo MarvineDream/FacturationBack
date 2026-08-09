@@ -8,13 +8,13 @@ dotenv.config();
 export const requireAuth = async (req, res, next) => {
   let token = null;
 
-  // 1️⃣ Priorité Authorization Header
+  // Priorité Authorization Header
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith("Bearer ")) {
     token = authHeader.split(" ")[1];
   }
 
-  // 2️⃣ Sinon Token via Cookie
+  // Sinon Token via Cookie
   if (!token && req.cookies?.token) {
     token = req.cookies.token;
   }
